@@ -1,7 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 #define N 10
-#define ADD_VALUE 42
 
 __global__ void vector_add(int *vec, int value, int n) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -17,13 +18,18 @@ int main(void) {
     int h_vec[N];
     int *d_vec;
 
+    // CPU generates a random number to send to the GPU
+    srand(time(NULL));
+    int add_value = (rand() % 100) + 1;  // random int between 1 and 100
+
     // Fill vector with values: 10, 20, 30, ...
     printf("Input vector:\n  ");
     for (int i = 0; i < N; i++) {
         h_vec[i] = (i + 1) * 10;
         printf("%d ", h_vec[i]);
     }
-    printf("\n\nAdding %d to each element in parallel...\n\n", ADD_VALUE);
+    printf("\n\nCPU generated random number: %d\n", add_value);
+    printf("Sending to GPU for parallel addition...\n\n");
 
     // Allocate device memory and copy data to GPU
     cudaMalloc(&d_vec, N * sizeof(int));
@@ -34,7 +40,7 @@ int main(void) {
     int num_blocks = 1;
 
     printf("Launch config: %d block(s), %d thread(s) per block\n\n", num_blocks, threads_per_block);
-    vector_add<<<num_blocks, threads_per_block>>>(d_vec, ADD_VALUE, N);
+    vector_add<<<num_blocks, threads_per_block>>>(d_vec, add_value, N);
     cudaDeviceSynchronize();
 
     // Copy result back to host
